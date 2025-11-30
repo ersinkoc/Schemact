@@ -1,0 +1,32 @@
+{
+  "name": "schemact",
+  "version": "1.0.1",
+  "description": "A Zero-Dependency, AST-Based Database Schema Management Tool",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "schemact": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "node tests/test-runner.js",
+    "schemact": "node --loader ts-node/esm src/cli.ts"
+  },
+  "keywords": [
+    "database",
+    "migrations",
+    "schema",
+    "ast",
+    "dsl"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.19.25",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

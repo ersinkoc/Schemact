@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Schemact - Zero-dependency, AST-based database schema management. A production-ready alternative to Knex, Prisma, and TypeORM.">
+    <link rel="canonical" href="https://schemact.oxog.dev/">
+    <meta name="keywords" content="database migrations, schema management, TypeScript, zero dependencies, SQL, PostgreSQL, MySQL, SQLite">
+    <meta name="author" content="Schemact Team">
+    <meta property="og:title" content="Schemact - Zero-Dependency Database Migrations">
+    <meta property="og:description" content="AST-based schema management for PostgreSQL, MySQL, and SQLite. No dependencies. Type-safe. Production ready.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://schemact.oxog.dev/">
+    <title>Schemact - Zero-Dependency Database Schema Management</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Custom Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: "hsl(var(--border))",
+                        input: "hsl(var(--input))",
+                        ring: "hsl(var(--ring))",
+                        background: "hsl(var(--background))",
+                        foreground: "hsl(var(--foreground))",
+                        primary: {
+                            DEFAULT: "hsl(var(--primary))",
+                            foreground: "hsl(var(--primary-foreground))",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(var(--secondary))",
+                            foreground: "hsl(var(--secondary-foreground))",
+                        },
+                        accent: {
+                            DEFAULT: "hsl(var(--accent))",
+                            foreground: "hsl(var(--accent-foreground))",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(var(--muted))",
+                            foreground: "hsl(var(--muted-foreground))",
+                        },
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.8s ease-out forwards',
+                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                        'fade-in-down': 'fadeInDown 0.6s ease-out forwards',
+                        'scale-in': 'scaleIn 0.5s ease-out forwards',
+                        'slide-in-left': 'slideInLeft 0.8s ease-out forwards',
+                        'slide-in-right': 'slideInRight 0.8s ease-out forwards',
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-slow': 'float 8s ease-in-out infinite',
+                        'float-slower': 'float 10s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'gradient': 'gradient 8s ease infinite',
+                        'gradient-fast': 'gradient 3s ease infinite',
+                        'spin-slow': 'spin 20s linear infinite',
+                        'bounce-slow': 'bounce 3s infinite',
+                        'wiggle': 'wiggle 1s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'typing': 'typing 3s steps(30) infinite, blink 0.5s step-end infinite alternate',
+                        'blob': 'blob 7s infinite',
+                        'morph': 'morph 8s ease-in-out infinite',
+                        'shimmer': 'shimmer 2s linear infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(40px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        fadeInDown: {
+                            '0%': { opacity: '0', transform: 'translateY(-20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        },
+                        slideInLeft: {
+                            '0%': { opacity: '0', transform: 'translateX(-50px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' },
+                        },
+                        slideInRight: {
+                            '0%': { opacity: '0', transform: 'translateX(50px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-20px) rotate(5deg)' },
+                        },
+                        gradient: {
+                            '0%, 100%': { backgroundPosition: '0% 50%' },
+                            '50%': { backgroundPosition: '100% 50%' },
+                        },
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' },
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 20px rgba(124, 58, 237, 0.5)' },
+                            '100%': { boxShadow: '0 0 40px rgba(124, 58, 237, 0.8), 0 0 60px rgba(124, 58, 237, 0.4)' },
+                        },
+                        typing: {
+                            '0%': { width: '0' },
+                            '50%': { width: '100%' },
+                            '100%': { width: '0' },
+                        },
+                        blink: {
+                            '50%': { borderColor: 'transparent' },
+                        },
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        },
+                        morph: {
+                            '0%, 100%': { borderRadius: '60% 40% 30% 70%/60% 30% 70% 40%' },
+                            '50%': { borderRadius: '30% 60% 70% 40%/50% 60% 30% 60%' },
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '-200% 0' },
+                            '100%': { backgroundPosition: '200% 0' },
+                        },
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96.1%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 262.1 83.3% 57.8%;
+            --primary: 262.1 83.3% 57.8%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96.1%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --accent: 210 40% 96.1%;
+            --accent-foreground: 222.2 47.4% 11.2%;
+        }
+
+        .dark {
+            --background: 224 71% 4%;
+            --foreground: 213 31% 91%;
+            --muted: 223 47% 11%;
+            --muted-foreground: 215.4 16.3% 56.9%;
+            --border: 216 34% 17%;
+            --input: 216 34% 17%;
+            --ring: 263.4 70% 50.4%;
+            --primary: 263.4 70% 50.4%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 222.2 47.4% 11.2%;
+            --secondary-foreground: 210 40% 98%;
+            --accent: 216 34% 17%;
+            --accent-foreground: 210 40% 98%;
+        }
+
+        [x-cloak] { display: none !important; }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: hsl(var(--muted));
+        }
+        ::-webkit-scrollbar-thumb {
+            background: hsl(var(--primary));
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: hsl(var(--primary) / 0.8);
+        }
+
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #667eea 75%, #764ba2 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient 4s ease infinite;
+        }
+
+        .gradient-text-static {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Animated blobs */
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.6;
+            animation: blob 7s infinite;
+        }
+
+        .blob-1 {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.4), rgba(118, 75, 162, 0.4));
+            top: -100px;
+            left: -100px;
+        }
+
+        .blob-2 {
+            width: 350px;
+            height: 350px;
+            background: linear-gradient(135deg, rgba(240, 147, 251, 0.3), rgba(118, 75, 162, 0.3));
+            top: 200px;
+            right: -50px;
+            animation-delay: 2s;
+        }
+
+        .blob-3 {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(240, 147, 251, 0.3));
+            bottom: -100px;
+            left: 30%;
+            animation-delay: 4s;
+        }
+
+        .dark .blob {
+            opacity: 0.3;
+        }
+
+        /* Glass morphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .dark .glass {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Code block styling */
+        .code-block {
+            background: linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%);
+        }
+
+        /* Feature card effects */
+        .feature-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-12px) rotateX(5deg);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 2px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.5), rgba(240, 147, 251, 0.5));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Stat card effects */
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .stat-card:hover::after {
+            transform: scaleX(1);
+        }
+
+        /* Glow effects */
+        .glow {
+            box-shadow: 0 0 30px rgba(124, 58, 237, 0.4);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .glow:hover {
+            box-shadow: 0 0 50px rgba(124, 58, 237, 0.6), 0 0 80px rgba(124, 58, 237, 0.3);
+        }
+
+        /* Button shimmer effect */
+        .btn-shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-shimmer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        /* Floating shapes */
+        .floating-shape {
+            position: absolute;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+
+        .dark .floating-shape {
+            opacity: 0.05;
+        }
+
+        /* Terminal cursor */
+        .terminal-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 20px;
+            background: #22c55e;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        /* Typing effect */
+        .typing-text {
+            overflow: hidden;
+            white-space: nowrap;
+            border-right: 3px solid #22c55e;
+            animation: typing-expand 4s steps(30) infinite, blink-caret 0.75s step-end infinite;
+        }
+
+        @keyframes typing-expand {
+            0%, 100% { width: 0; }
+            50%, 90% { width: 100%; }
+        }
+
+        @keyframes blink-caret {
+            50% { border-color: transparent; }
+        }
+
+        /* Comparison table hover */
+        .comparison-row {
+            transition: all 0.3s ease;
+        }
+
+        .comparison-row:hover {
+            background: hsl(var(--primary) / 0.05);
+            transform: scale(1.01);
+        }
+
+        /* Scroll indicator */
+        .scroll-indicator {
+            animation: bounce 2s infinite;
+        }
+
+        /* Intersection Observer animation classes */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal-left.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal-right.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .reveal-scale {
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal-scale.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Gradient border animation */
+        .gradient-border {
+            position: relative;
+        }
+
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 2px;
+            background: linear-gradient(var(--angle, 0deg), #667eea, #764ba2, #f093fb, #667eea);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: rotate-gradient 3s linear infinite;
+        }
+
+        @keyframes rotate-gradient {
+            to { --angle: 360deg; }
+        }
+
+        @property --angle {
+            syntax: '<angle>';
+            initial-value: 0deg;
+            inherits: false;
+        }
+
+        /* Number counter animation */
+        .counter {
+            display: inline-block;
+        }
+
+        /* Logo pulse */
+        .logo-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Particle effect placeholder */
+        .particles {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: hsl(var(--primary));
+            border-radius: 50%;
+            opacity: 0.3;
+        }
+
+        /* FAQ accordion */
+        .faq-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .faq-content.open {
+            max-height: 500px;
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            z-index: 9999;
+            transition: width 0.1s ease;
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground antialiased transition-colors duration-500"
+      x-data="{
+          mobileMenuOpen: false,
+          darkMode: localStorage.getItem('darkMode') === 'true',
+          activeDb: 'postgres',
+          copied: false,
+          scrollProgress: 0,
+          openFaq: null,
+          countersAnimated: false
+      }"
+      x-init="
+          $watch('darkMode', val => { localStorage.setItem('darkMode', val); document.documentElement.classList.toggle('dark', val) });
+          document.documentElement.classList.toggle('dark', darkMode);
+
+          // Scroll progress
+          window.addEventListener('scroll', () => {
+              const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+              const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+              scrollProgress = (winScroll / height) * 100;
+          });
+
+          // Intersection Observer for reveal animations
+          const observer = new IntersectionObserver((entries) => {
+              entries.forEach(entry => {
+                  if (entry.isIntersecting) {
+                      entry.target.classList.add('active');
+                  }
+              });
+          }, { threshold: 0.1 });
+
+          document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale').forEach(el => {
+              observer.observe(el);
+          });
+
+          // Counter animation
+          const counterObserver = new IntersectionObserver((entries) => {
+              entries.forEach(entry => {
+                  if (entry.isIntersecting && !countersAnimated) {
+                      countersAnimated = true;
+                      document.querySelectorAll('.counter').forEach(counter => {
+                          const target = parseInt(counter.dataset.target);
+                          const suffix = counter.dataset.suffix || '';
+                          let current = 0;
+                          const increment = target / 50;
+                          const timer = setInterval(() => {
+                              current += increment;
+                              if (current >= target) {
+                                  counter.textContent = target + suffix;
+                                  clearInterval(timer);
+                              } else {
+                                  counter.textContent = Math.floor(current) + suffix;
+                              }
+                          }, 30);
+                      });
+                  }
+              });
+          }, { threshold: 0.5 });
+
+          const statsSection = document.querySelector('#stats');
+          if (statsSection) counterObserver.observe(statsSection);
+      "
+      :class="{ 'dark': darkMode }">
+
+    <!-- Progress Bar -->
+    <div class="progress-bar" :style="{ width: scrollProgress + '%' }"></div>
+
+    <!-- Animated Background Blobs -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <!-- Floating Shapes -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <svg class="floating-shape w-20 h-20 text-primary animate-float" style="top: 20%; left: 10%;" viewBox="0 0 100 100">
+            <polygon points="50,10 90,90 10,90" fill="currentColor"/>
+        </svg>
+        <svg class="floating-shape w-16 h-16 text-purple-500 animate-float-slow" style="top: 60%; right: 15%;" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="currentColor"/>
+        </svg>
+        <svg class="floating-shape w-24 h-24 text-pink-500 animate-float-slower" style="bottom: 20%; left: 20%;" viewBox="0 0 100 100">
+            <rect x="20" y="20" width="60" height="60" rx="10" fill="currentColor" transform="rotate(45 50 50)"/>
+        </svg>
+        <svg class="floating-shape w-12 h-12 text-primary animate-spin-slow" style="top: 40%; right: 25%;" viewBox="0 0 100 100">
+            <polygon points="50,5 61,40 98,40 68,62 79,97 50,75 21,97 32,62 2,40 39,40" fill="currentColor"/>
+        </svg>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full glass z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <!-- Logo -->
+                <a href="#" class="flex items-center space-x-3 group">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-gradient-to-br from-primary to-purple-600 rounded-xl blur-lg opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                        <div class="relative w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <span class="text-2xl font-bold gradient-text-static">Schemact</span>
+                </a>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-1">
+                    <a href="#features" class="px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-300">Features</a>
+                    <a href="docs.html" class="px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-300">Docs</a>
+                    <a href="#comparison" class="px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-300">Compare</a>
+                    <a href="#faq" class="px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-300">FAQ</a>
+
+                    <!-- Dark Mode Toggle -->
+                    <button @click="darkMode = !darkMode" class="relative p-2 rounded-lg hover:bg-accent transition-all duration-300 ml-2 overflow-hidden group">
+                        <div class="relative w-5 h-5">
+                            <svg x-show="!darkMode" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 rotate-90" x-transition:enter-end="opacity-100 rotate-0" class="absolute inset-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            </svg>
+                            <svg x-show="darkMode" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -rotate-90" x-transition:enter-end="opacity-100 rotate-0" class="absolute inset-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                        </div>
+                    </button>
+
+                    <a href="https://github.com/ersinkoc/schemact" target="_blank" class="ml-4 btn-shimmer inline-flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 hover:scale-105">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="font-semibold">GitHub</span>
+                    </a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="flex items-center space-x-2 md:hidden">
+                    <button @click="darkMode = !darkMode" class="p-2 rounded-lg hover:bg-accent transition-all">
+                        <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                        <svg x-show="darkMode" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                    </button>
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="p-2 rounded-lg hover:bg-accent">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path x-show="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            <path x-show="mobileMenuOpen" x-cloak stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div x-show="mobileMenuOpen" x-cloak
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 -translate-y-4"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-4"
+             class="md:hidden border-t border-border bg-background/95 backdrop-blur">
+            <div class="px-4 py-4 space-y-2">
+                <a href="#features" @click="mobileMenuOpen = false" class="block px-4 py-3 rounded-xl hover:bg-accent transition-colors">Features</a>
+                <a href="docs.html" @click="mobileMenuOpen = false" class="block px-4 py-3 rounded-xl hover:bg-accent transition-colors">Documentation</a>
+                <a href="#comparison" @click="mobileMenuOpen = false" class="block px-4 py-3 rounded-xl hover:bg-accent transition-colors">Compare</a>
+                <a href="#faq" @click="mobileMenuOpen = false" class="block px-4 py-3 rounded-xl hover:bg-accent transition-colors">FAQ</a>
+                <a href="https://github.com/ersinkoc/schemact" target="_blank" class="block px-4 py-3 rounded-xl bg-gradient-to-r from-primary to-purple-600 text-white text-center font-semibold">View on GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center justify-center pt-16 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <div class="max-w-7xl mx-auto w-full">
+            <div class="text-center">
+                <!-- Animated Badge -->
+                <div class="animate-fade-in-down inline-flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 border border-primary/20 text-primary rounded-full text-sm font-medium mb-8 hover:scale-105 transition-transform cursor-default">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                    </span>
+                    <span>v1.0.1 Released</span>
+                    <span class="hidden sm:inline">•</span>
+                    <span class="hidden sm:inline">304 Tests Passing</span>
+                    <span class="hidden sm:inline">•</span>
+                    <span class="hidden sm:inline">100% Coverage</span>
+                </div>
+
+                <!-- Main Heading with Animation -->
+                <h1 class="animate-fade-in-up text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold mb-6 tracking-tight" style="animation-delay: 0.1s">
+                    <span class="block mb-2">Zero-Dependency</span>
+                    <span class="gradient-text inline-block">Database Migrations</span>
+                </h1>
+
+                <!-- Subheading with Typing Effect Container -->
+                <div class="animate-fade-in-up text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed" style="animation-delay: 0.2s">
+                    <p class="mb-4">AST-based schema management for</p>
+                    <div class="flex flex-wrap justify-center gap-3 text-foreground font-semibold">
+                        <span class="px-4 py-2 bg-blue-500/10 rounded-lg border border-blue-500/20 hover:scale-110 transition-transform cursor-default">PostgreSQL</span>
+                        <span class="px-4 py-2 bg-orange-500/10 rounded-lg border border-orange-500/20 hover:scale-110 transition-transform cursor-default">MySQL</span>
+                        <span class="px-4 py-2 bg-green-500/10 rounded-lg border border-green-500/20 hover:scale-110 transition-transform cursor-default">SQLite</span>
+                    </div>
+                </div>
+
+                <!-- CTA Buttons -->
+                <div class="animate-fade-in-up flex flex-col sm:flex-row gap-4 justify-center mb-16" style="animation-delay: 0.3s">
+                    <a href="docs.html#getting-started" class="group relative inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-primary to-purple-600 text-white rounded-2xl text-lg font-semibold shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 overflow-hidden glow">
+                        <span class="relative z-10 flex items-center">
+                            Get Started Free
+                            <svg class="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                            </svg>
+                        </span>
+                        <div class="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </a>
+                    <a href="docs.html" class="group inline-flex items-center justify-center px-8 py-4 bg-secondary hover:bg-secondary/80 text-foreground rounded-2xl text-lg font-semibold border-2 border-border hover:border-primary/50 transition-all duration-300 hover:-translate-y-1">
+                        <svg class="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                        Read Documentation
+                    </a>
+                </div>
+
+                <!-- Interactive Terminal -->
+                <div class="animate-fade-in-up max-w-2xl mx-auto" style="animation-delay: 0.4s">
+                    <div class="code-block rounded-2xl overflow-hidden shadow-2xl transform hover:scale-[1.02] transition-transform duration-300">
+                        <div class="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/20">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 rounded-full bg-red-500 hover:bg-red-400 transition-colors cursor-pointer"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500 hover:bg-yellow-400 transition-colors cursor-pointer"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500 hover:bg-green-400 transition-colors cursor-pointer"></div>
+                            </div>
+                            <span class="text-gray-400 text-sm font-mono">terminal</span>
+                            <button @click="navigator.clipboard.writeText('npm install schemact'); copied = true; setTimeout(() => copied = false, 2000)"
+                                    class="px-3 py-1 text-xs bg-white/10 hover:bg-white/20 rounded-lg text-gray-300 transition-all duration-300 hover:scale-105">
+                                <span x-show="!copied" class="flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                    </svg>
+                                    Copy
+                                </span>
+                                <span x-show="copied" x-cloak class="text-green-400 flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    Copied!
+                                </span>
+                            </button>
+                        </div>
+                        <div class="p-6 font-mono text-left">
+                            <div class="flex items-center">
+                                <span class="text-green-400 mr-2">$</span>
+                                <span class="text-white">npm install schemact</span>
+                                <span class="terminal-cursor ml-1"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scroll Indicator -->
+                <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 scroll-indicator">
+                    <a href="#demo" class="flex flex-col items-center text-muted-foreground hover:text-foreground transition-colors">
+                        <span class="text-sm mb-2">Scroll to explore</span>
+                        <svg class="w-6 h-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live Code Demo Section -->
+    <section id="demo" class="py-24 px-4 sm:px-6 lg:px-8 relative">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16 reveal">
+                <span class="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">Live Demo</span>
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">See It In Action</h2>
+                <p class="text-xl text-muted-foreground max-w-2xl mx-auto">One schema definition, perfectly optimized SQL for each database</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 items-start">
+                <!-- Input: Schemact DSL -->
+                <div class="reveal-left">
+                    <div class="code-block rounded-2xl overflow-hidden shadow-2xl transform hover:scale-[1.01] transition-all duration-300">
+                        <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                            <div class="flex items-center space-x-3">
+                                <div class="flex space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                </div>
+                                <span class="text-gray-400 text-sm font-mono">schema.sigl</span>
+                            </div>
+                            <span class="px-3 py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-300 text-xs rounded-full font-semibold border border-purple-500/30">INPUT</span>
+                        </div>
+                        <pre class="p-6 text-sm overflow-x-auto leading-relaxed"><code class="language-sigl"><span class="text-gray-500"># Define your schema once</span>
+<span class="text-blue-400 font-semibold">model</span> <span class="text-yellow-400">User</span> {
+  <span class="text-gray-300">id</span>        <span class="text-purple-400">Serial</span>        <span class="text-pink-400">@pk</span>
+  <span class="text-gray-300">email</span>     <span class="text-purple-400">VarChar</span>(<span class="text-orange-400">255</span>) <span class="text-pink-400">@unique</span> <span class="text-pink-400">@notnull</span>
+  <span class="text-gray-300">name</span>      <span class="text-purple-400">Text</span>
+  <span class="text-gray-300">role</span>      <span class="text-purple-400">Enum</span>(<span class="text-green-400">'admin'</span>, <span class="text-green-400">'user'</span>) <span class="text-pink-400">@default</span>(<span class="text-green-400">'user'</span>)
+  <span class="text-gray-300">createdAt</span> <span class="text-purple-400">Timestamp</span>     <span class="text-pink-400">@default</span>(<span class="text-orange-400">CURRENT_TIMESTAMP</span>)
+}
+
+<span class="text-blue-400 font-semibold">model</span> <span class="text-yellow-400">Post</span> {
+  <span class="text-gray-300">id</span>       <span class="text-purple-400">Serial</span> <span class="text-pink-400">@pk</span>
+  <span class="text-gray-300">title</span>    <span class="text-purple-400">Text</span>   <span class="text-pink-400">@notnull</span>
+  <span class="text-gray-300">content</span>  <span class="text-purple-400">Text</span>
+  <span class="text-gray-300">authorId</span> <span class="text-purple-400">Int</span>    <span class="text-pink-400">@ref</span>(<span class="text-yellow-400">User</span>.<span class="text-gray-300">id</span>) <span class="text-pink-400">@onDelete</span>(<span class="text-orange-400">CASCADE</span>)
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Output: Generated SQL -->
+                <div class="reveal-right">
+                    <div class="code-block rounded-2xl overflow-hidden shadow-2xl">
+                        <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                            <div class="flex items-center space-x-3">
+                                <div class="flex space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                </div>
+                                <div class="flex space-x-1">
+                                    <button @click="activeDb = 'postgres'"
+                                            :class="activeDb === 'postgres' ? 'bg-blue-500/30 text-blue-300 scale-105' : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'"
+                                            class="px-3 py-1.5 rounded-lg text-xs font-mono transition-all duration-300">
+                                        PostgreSQL
+                                    </button>
+                                    <button @click="activeDb = 'mysql'"
+                                            :class="activeDb === 'mysql' ? 'bg-orange-500/30 text-orange-300 scale-105' : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'"
+                                            class="px-3 py-1.5 rounded-lg text-xs font-mono transition-all duration-300">
+                                        MySQL
+                                    </button>
+                                    <button @click="activeDb = 'sqlite'"
+                                            :class="activeDb === 'sqlite' ? 'bg-green-500/30 text-green-300 scale-105' : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'"
+                                            class="px-3 py-1.5 rounded-lg text-xs font-mono transition-all duration-300">
+                                        SQLite
+                                    </button>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 text-xs rounded-full font-semibold border border-green-500/30">OUTPUT</span>
+                        </div>
+
+                        <!-- PostgreSQL Output -->
+                        <pre x-show="activeDb === 'postgres'"
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0 translate-x-4"
+                             x-transition:enter-end="opacity-100 translate-x-0"
+                             class="p-6 text-sm overflow-x-auto leading-relaxed"><code><span class="text-blue-400">CREATE TABLE</span> <span class="text-yellow-400">"User"</span> (
+  <span class="text-yellow-400">"id"</span> <span class="text-purple-400">SERIAL</span> <span class="text-pink-400">PRIMARY KEY</span>,
+  <span class="text-yellow-400">"email"</span> <span class="text-purple-400">VARCHAR(255)</span> <span class="text-pink-400">UNIQUE NOT NULL</span>,
+  <span class="text-yellow-400">"name"</span> <span class="text-purple-400">TEXT</span>,
+  <span class="text-yellow-400">"role"</span> <span class="text-purple-400">VARCHAR(50)</span> <span class="text-pink-400">DEFAULT</span> <span class="text-green-400">'user'</span>
+    <span class="text-pink-400">CHECK</span> (<span class="text-yellow-400">"role"</span> <span class="text-blue-400">IN</span> (<span class="text-green-400">'admin'</span>, <span class="text-green-400">'user'</span>)),
+  <span class="text-yellow-400">"createdAt"</span> <span class="text-purple-400">TIMESTAMP</span> <span class="text-pink-400">DEFAULT</span> <span class="text-orange-400">CURRENT_TIMESTAMP</span>
+);</code></pre>
+
+                        <!-- MySQL Output -->
+                        <pre x-show="activeDb === 'mysql'" x-cloak
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0 translate-x-4"
+                             x-transition:enter-end="opacity-100 translate-x-0"
+                             class="p-6 text-sm overflow-x-auto leading-relaxed"><code><span class="text-blue-400">CREATE TABLE</span> <span class="text-yellow-400">`User`</span> (
+  <span class="text-yellow-400">`id`</span> <span class="text-purple-400">INT AUTO_INCREMENT</span> <span class="text-pink-400">PRIMARY KEY</span>,
+  <span class="text-yellow-400">`email`</span> <span class="text-purple-400">VARCHAR(255)</span> <span class="text-pink-400">UNIQUE NOT NULL</span>,
+  <span class="text-yellow-400">`name`</span> <span class="text-purple-400">TEXT</span>,
+  <span class="text-yellow-400">`role`</span> <span class="text-purple-400">ENUM</span>(<span class="text-green-400">'admin'</span>, <span class="text-green-400">'user'</span>) <span class="text-pink-400">DEFAULT</span> <span class="text-green-400">'user'</span>,
+  <span class="text-yellow-400">`createdAt`</span> <span class="text-purple-400">TIMESTAMP</span> <span class="text-pink-400">DEFAULT</span> <span class="text-orange-400">CURRENT_TIMESTAMP</span>
+) <span class="text-gray-500">ENGINE=InnoDB CHARSET=utf8mb4</span>;</code></pre>
+
+                        <!-- SQLite Output -->
+                        <pre x-show="activeDb === 'sqlite'" x-cloak
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0 translate-x-4"
+                             x-transition:enter-end="opacity-100 translate-x-0"
+                             class="p-6 text-sm overflow-x-auto leading-relaxed"><code><span class="text-blue-400">CREATE TABLE</span> <span class="text-yellow-400">"User"</span> (
+  <span class="text-yellow-400">"id"</span> <span class="text-purple-400">INTEGER PRIMARY KEY AUTOINCREMENT</span>,
+  <span class="text-yellow-400">"email"</span> <span class="text-purple-400">TEXT</span> <span class="text-pink-400">UNIQUE NOT NULL</span>,
+  <span class="text-yellow-400">"name"</span> <span class="text-purple-400">TEXT</span>,
+  <span class="text-yellow-400">"role"</span> <span class="text-purple-400">TEXT</span> <span class="text-pink-400">DEFAULT</span> <span class="text-green-400">'user'</span>
+    <span class="text-pink-400">CHECK</span> (<span class="text-yellow-400">"role"</span> <span class="text-blue-400">IN</span> (<span class="text-green-400">'admin'</span>, <span class="text-green-400">'user'</span>)),
+  <span class="text-yellow-400">"createdAt"</span> <span class="text-purple-400">TEXT</span> <span class="text-pink-400">DEFAULT</span> <span class="text-orange-400">CURRENT_TIMESTAMP</span>
+);</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-24 px-4 sm:px-6 lg:px-8 relative">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16 reveal">
+                <span class="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">Features</span>
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">Why Developers Choose Schemact</h2>
+                <p class="text-xl text-muted-foreground max-w-2xl mx-auto">Built for performance, security, and developer happiness</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1: Zero Dependencies -->
+                <div class="feature-card reveal-scale group relative bg-background border-2 border-border hover:border-primary/50 rounded-2xl p-8 overflow-hidden" style="animation-delay: 0.1s">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-bl-full"></div>
+                    <div class="relative">
+                        <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-blue-500/25">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 group-hover:text-primary transition-colors">Zero Dependencies</h3>
+                        <p class="text-muted-foreground leading-relaxed">Only Node.js built-ins. No external packages means no supply chain attacks, faster installs, and smaller bundles.</p>
+                    </div>
+                </div>
+
+                <!-- Feature 2: Security Hardened -->
+                <div class="feature-card reveal-scale group relative bg-background border-2 border-border hover:border-primary/50 rounded-2xl p-8 overflow-hidden" style="animation-delay: 0.15s">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-transparent rounded-bl-full"></div>
+                    <div class="relative">
+                        <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-green-500/25">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 group-hover:text-primary transition-colors">Security Hardened</h3>
+                        <p class="text-muted-foreground leading-relaxed">SQL injection protection, path traversal prevention, file size limits, and SHA-256 integrity verification.</p>
+                    </div>
+                </div>
+
+                <!-- Feature 3: Type-Safe -->
+                <div class="feature-card reveal-scale group relative bg-background border-2 border-border hover:border-primary/50 rounded-2xl p-8 overflow-hidden" style="animation-delay: 0.2s">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-transparent rounded-bl-full"></div>
+                    <div class="relative">
+                        <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-purple-500/25">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 group-hover:text-primary transition-colors">Type-Safe</h3>
+                        <p class="text-muted-foreground leading-relaxed">Written in strict TypeScript. Catch errors at compile-time, not runtime. Full IntelliSense support.</p>
+                    </div>
+                </div>
+
+                <!-- Feature 4: Multi-Database -->
+                <div class="feature-card reveal-scale group relative bg-background border-2 border-border hover:border-primary/50 rounded-2xl p-8 overflow-hidden" style="animation-delay: 0.25s">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-transparent rounded-bl-full"></div>
+                    <div class="relative">
+                        <div class="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-orange-500/25">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 group-hover:text-primary transition-colors">Multi-Database</h3>
+                        <p class="text-muted-foreground leading-relaxed">PostgreSQL, MySQL, and SQLite support. Same DSL generates optimized SQL for each database.</p>
+                    </div>
+                </div>
+
+                <!-- Feature 5: AST-Based -->
+                <div class="feature-card reveal-scale group relative bg-background border-2 border-border hover:border-primary/50 rounded-2xl p-8 overflow-hidden" style="animation-delay: 0.3s">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-yellow-500/10 to-transparent rounded-bl-full"></div>
+                    <div class="relative">
+                        <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-yellow-500/25">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 group-hover:text-primary transition-colors">AST-Based</h3>
+                        <p class="text-muted-foreground leading-relaxed">Real compiler pipeline: Lexer, Parser, AST, Generator. No regex hacks. Proper error messages with line numbers.</p>
+                    </div>
+                </div>
+
+                <!-- Feature 6: 100% Tested -->
+                <div class="feature-card reveal-scale group relative bg-background border-2 border-border hover:border-primary/50 rounded-2xl p-8 overflow-hidden" style="animation-delay: 0.35s">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-teal-500/10 to-transparent rounded-bl-full"></div>
+                    <div class="relative">
+                        <div class="w-16 h-16 bg-gradient-to-br from-teal-500 to-green-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg shadow-teal-500/25">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 group-hover:text-primary transition-colors">100% Tested</h3>
+                        <p class="text-muted-foreground leading-relaxed">304 comprehensive tests with 100% pass rate. Battle-tested and production ready.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section id="stats" class="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-muted/30 to-background">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16 reveal">
+                <span class="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">By The Numbers</span>
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">Production Ready</h2>
+                <p class="text-xl text-muted-foreground">Built for reliability and performance</p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="stat-card reveal-scale bg-background rounded-2xl p-8 text-center border border-border hover:shadow-2xl transition-all duration-500 group" style="animation-delay: 0.1s">
+                    <div class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent mb-2">
+                        <span class="counter" data-target="304">0</span>
+                    </div>
+                    <div class="text-muted-foreground font-medium group-hover:text-foreground transition-colors">Tests Passing</div>
+                </div>
+                <div class="stat-card reveal-scale bg-background rounded-2xl p-8 text-center border border-border hover:shadow-2xl transition-all duration-500 group" style="animation-delay: 0.15s">
+                    <div class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent mb-2">
+                        <span class="counter" data-target="100" data-suffix="%">0%</span>
+                    </div>
+                    <div class="text-muted-foreground font-medium group-hover:text-foreground transition-colors">Test Coverage</div>
+                </div>
+                <div class="stat-card reveal-scale bg-background rounded-2xl p-8 text-center border border-border hover:shadow-2xl transition-all duration-500 group" style="animation-delay: 0.2s">
+                    <div class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent mb-2">
+                        <span class="counter" data-target="0">0</span>
+                    </div>
+                    <div class="text-muted-foreground font-medium group-hover:text-foreground transition-colors">Dependencies</div>
+                </div>
+                <div class="stat-card reveal-scale bg-background rounded-2xl p-8 text-center border border-border hover:shadow-2xl transition-all duration-500 group" style="animation-delay: 0.25s">
+                    <div class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
+                        <span class="counter" data-target="3">0</span>
+                    </div>
+                    <div class="text-muted-foreground font-medium group-hover:text-foreground transition-colors">Databases</div>
+                </div>
+            </div>
+
+            <!-- Security Badges -->
+            <div class="mt-16 flex flex-wrap justify-center gap-4 reveal">
+                <span class="px-5 py-2.5 bg-green-500/10 text-green-600 dark:text-green-400 rounded-xl border border-green-500/20 font-medium text-sm hover:scale-105 transition-transform cursor-default flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    SQL Injection Protected
+                </span>
+                <span class="px-5 py-2.5 bg-green-500/10 text-green-600 dark:text-green-400 rounded-xl border border-green-500/20 font-medium text-sm hover:scale-105 transition-transform cursor-default flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Race Condition Safe
+                </span>
+                <span class="px-5 py-2.5 bg-green-500/10 text-green-600 dark:text-green-400 rounded-xl border border-green-500/20 font-medium text-sm hover:scale-105 transition-transform cursor-default flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Path Traversal Protected
+                </span>
+                <span class="px-5 py-2.5 bg-green-500/10 text-green-600 dark:text-green-400 rounded-xl border border-green-500/20 font-medium text-sm hover:scale-105 transition-transform cursor-default flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    SHA-256 Integrity
+                </span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Section -->
+    <section id="comparison" class="py-24 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16 reveal">
+                <span class="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">Comparison</span>
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">How Schemact Compares</h2>
+                <p class="text-xl text-muted-foreground">See why developers are switching</p>
+            </div>
+
+            <div class="overflow-x-auto reveal-scale">
+                <div class="inline-block min-w-full">
+                    <table class="w-full bg-background rounded-2xl border border-border overflow-hidden shadow-xl">
+                        <thead>
+                            <tr class="border-b border-border bg-muted/30">
+                                <th class="text-left p-6 font-semibold">Feature</th>
+                                <th class="p-6 text-center">
+                                    <span class="gradient-text font-bold text-lg">Schemact</span>
+                                </th>
+                                <th class="p-6 text-center text-muted-foreground">Prisma</th>
+                                <th class="p-6 text-center text-muted-foreground">Knex</th>
+                                <th class="p-6 text-center text-muted-foreground">TypeORM</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border">
+                            <tr class="comparison-row">
+                                <td class="p-6 font-medium">Dependencies</td>
+                                <td class="p-6 text-center"><span class="text-2xl font-bold text-green-500">0</span></td>
+                                <td class="p-6 text-center text-muted-foreground">~50</td>
+                                <td class="p-6 text-center text-muted-foreground">~20</td>
+                                <td class="p-6 text-center text-muted-foreground">~100</td>
+                            </tr>
+                            <tr class="comparison-row">
+                                <td class="p-6 font-medium">Custom DSL</td>
+                                <td class="p-6 text-center"><span class="text-green-500 text-2xl">&#10003;</span></td>
+                                <td class="p-6 text-center"><span class="text-green-500 text-2xl">&#10003;</span></td>
+                                <td class="p-6 text-center"><span class="text-red-500 text-2xl">&#10007;</span></td>
+                                <td class="p-6 text-center"><span class="text-red-500 text-2xl">&#10007;</span></td>
+                            </tr>
+                            <tr class="comparison-row">
+                                <td class="p-6 font-medium">AST-Based Compiler</td>
+                                <td class="p-6 text-center"><span class="text-green-500 text-2xl">&#10003;</span></td>
+                                <td class="p-6 text-center"><span class="text-green-500 text-2xl">&#10003;</span></td>
+                                <td class="p-6 text-center"><span class="text-red-500 text-2xl">&#10007;</span></td>
+                                <td class="p-6 text-center"><span class="text-red-500 text-2xl">&#10007;</span></td>
+                            </tr>
+                            <tr class="comparison-row">
+                                <td class="p-6 font-medium">Database Introspection</td>
+                                <td class="p-6 text-center"><span class="text-green-500 text-2xl">&#10003;</span></td>
+                                <td class="p-6 text-center"><span class="text-green-500 text-2xl">&#10003;</span></td>
+                                <td class="p-6 text-center"><span class="text-red-500 text-2xl">&#10007;</span></td>
+                                <td class="p-6 text-center"><span class="text-red-500 text-2xl">&#10007;</span></td>
+                            </tr>
+                            <tr class="comparison-row">
+                                <td class="p-6 font-medium">Integrity Checking</td>
+                                <td class="p-6 text-center"><span class="text-green-500 text-2xl">&#10003;</span></td>
+                                <td class="p-6 text-center"><span class="text-red-500 text-2xl">&#10007;</span></td>
+                                <td class="p-6 text-center"><span class="text-red-500 text-2xl">&#10007;</span></td>
+                                <td class="p-6 text-center"><span class="text-red-500 text-2xl">&#10007;</span></td>
+                            </tr>
+                            <tr class="comparison-row">
+                                <td class="p-6 font-medium">Multi-Database</td>
+                                <td class="p-6 text-center"><span class="text-green-500 text-2xl">&#10003;</span></td>
+                                <td class="p-6 text-center"><span class="text-green-500 text-2xl">&#10003;</span></td>
+                                <td class="p-6 text-center"><span class="text-green-500 text-2xl">&#10003;</span></td>
+                                <td class="p-6 text-center"><span class="text-green-500 text-2xl">&#10003;</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-muted/30">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-16 reveal">
+                <span class="inline-block px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">FAQ</span>
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">Frequently Asked Questions</h2>
+                <p class="text-xl text-muted-foreground">Everything you need to know</p>
+            </div>
+
+            <div class="space-y-4">
+                <!-- FAQ Item 1 -->
+                <div class="reveal bg-background border border-border rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300" style="animation-delay: 0.1s">
+                    <button @click="openFaq = openFaq === 1 ? null : 1" class="w-full px-6 py-5 text-left flex items-center justify-between">
+                        <span class="font-semibold text-lg">What makes Schemact different from Prisma or TypeORM?</span>
+                        <svg :class="{ 'rotate-180': openFaq === 1 }" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div :class="{ 'open': openFaq === 1 }" class="faq-content">
+                        <div class="px-6 pb-5 text-muted-foreground">
+                            Schemact is a zero-dependency, pure migration tool. Unlike ORMs, it focuses solely on schema management without runtime overhead. It has no external dependencies, uses a clean custom DSL, and includes SHA-256 integrity checking for migration files.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 2 -->
+                <div class="reveal bg-background border border-border rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300" style="animation-delay: 0.15s">
+                    <button @click="openFaq = openFaq === 2 ? null : 2" class="w-full px-6 py-5 text-left flex items-center justify-between">
+                        <span class="font-semibold text-lg">Is Schemact production-ready?</span>
+                        <svg :class="{ 'rotate-180': openFaq === 2 }" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div :class="{ 'open': openFaq === 2 }" class="faq-content">
+                        <div class="px-6 pb-5 text-muted-foreground">
+                            Yes! Schemact has 304 comprehensive tests with 100% pass rate. It includes security hardening against SQL injection, path traversal, and other attacks. Transaction-based migrations ensure data integrity, and batch management allows safe rollbacks.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 3 -->
+                <div class="reveal bg-background border border-border rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300" style="animation-delay: 0.2s">
+                    <button @click="openFaq = openFaq === 3 ? null : 3" class="w-full px-6 py-5 text-left flex items-center justify-between">
+                        <span class="font-semibold text-lg">Which databases are supported?</span>
+                        <svg :class="{ 'rotate-180': openFaq === 3 }" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div :class="{ 'open': openFaq === 3 }" class="faq-content">
+                        <div class="px-6 pb-5 text-muted-foreground">
+                            Schemact supports PostgreSQL, MySQL/MariaDB, and SQLite. Each database has a dedicated generator that produces optimized SQL using database-specific features like SERIAL for PostgreSQL, AUTO_INCREMENT for MySQL, and AUTOINCREMENT for SQLite.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 4 -->
+                <div class="reveal bg-background border border-border rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300" style="animation-delay: 0.25s">
+                    <button @click="openFaq = openFaq === 4 ? null : 4" class="w-full px-6 py-5 text-left flex items-center justify-between">
+                        <span class="font-semibold text-lg">Can I use Schemact with an existing database?</span>
+                        <svg :class="{ 'rotate-180': openFaq === 4 }" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div :class="{ 'open': openFaq === 4 }" class="faq-content">
+                        <div class="px-6 pb-5 text-muted-foreground">
+                            Absolutely! Use the <code class="px-2 py-1 bg-muted rounded text-sm">schemact pull</code> command to introspect your existing database and generate a .sact schema file. This reverse-engineering feature supports all three databases.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 5 -->
+                <div class="reveal bg-background border border-border rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300" style="animation-delay: 0.3s">
+                    <button @click="openFaq = openFaq === 5 ? null : 5" class="w-full px-6 py-5 text-left flex items-center justify-between">
+                        <span class="font-semibold text-lg">How does the custom DSL work?</span>
+                        <svg :class="{ 'rotate-180': openFaq === 5 }" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div :class="{ 'open': openFaq === 5 }" class="faq-content">
+                        <div class="px-6 pb-5 text-muted-foreground">
+                            Schemact uses a proper AST-based compiler pipeline. Your .sact files go through a Lexer (tokenization), Parser (AST generation), and Generator (SQL output). This means proper error messages with line numbers, not cryptic regex failures.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-24 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto text-center reveal">
+            <div class="relative bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 rounded-3xl p-12 md:p-16 border border-primary/20 overflow-hidden">
+                <!-- Decorative elements -->
+                <div class="absolute top-0 left-0 w-64 h-64 bg-primary/20 rounded-full filter blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute bottom-0 right-0 w-64 h-64 bg-purple-500/20 rounded-full filter blur-3xl translate-x-1/2 translate-y-1/2"></div>
+
+                <div class="relative">
+                    <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to Simplify Your Migrations?</h2>
+                    <p class="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">Join developers who have switched to Schemact for a cleaner, faster, and more secure migration experience.</p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <a href="docs.html#getting-started" class="group inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-primary to-purple-600 text-white rounded-2xl text-lg font-semibold shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 btn-shimmer glow">
+                            Get Started Now
+                            <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                            </svg>
+                        </a>
+                        <a href="https://github.com/ersinkoc/schemact" target="_blank" class="group inline-flex items-center justify-center px-8 py-4 bg-background text-foreground rounded-2xl text-lg font-semibold border-2 border-border hover:border-primary/50 transition-all duration-300 hover:-translate-y-1">
+                            <svg class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                                <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path>
+                            </svg>
+                            Star on GitHub
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-16 px-4 sm:px-6 lg:px-8 border-t border-border bg-muted/20">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid md:grid-cols-4 gap-12 mb-12">
+                <div class="md:col-span-2">
+                    <a href="#" class="flex items-center space-x-3 mb-6 group">
+                        <div class="relative">
+                            <div class="absolute inset-0 bg-gradient-to-br from-primary to-purple-600 rounded-xl blur-lg opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                            <div class="relative w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <span class="text-2xl font-bold">Schemact</span>
+                    </a>
+                    <p class="text-muted-foreground max-w-md mb-6">Zero-dependency, AST-based database schema management. Production-ready migrations for modern applications.</p>
+                    <div class="flex space-x-4">
+                        <a href="https://github.com/ersinkoc/schemact" target="_blank" class="w-10 h-10 bg-muted hover:bg-primary hover:text-white rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold mb-4 text-lg">Documentation</h4>
+                    <ul class="space-y-3 text-muted-foreground">
+                        <li><a href="docs.html#getting-started" class="hover:text-foreground transition-colors hover:translate-x-1 inline-block">Getting Started</a></li>
+                        <li><a href="docs.html#dsl-reference" class="hover:text-foreground transition-colors hover:translate-x-1 inline-block">DSL Reference</a></li>
+                        <li><a href="docs.html#cli-reference" class="hover:text-foreground transition-colors hover:translate-x-1 inline-block">CLI Reference</a></li>
+                        <li><a href="docs.html#api-reference" class="hover:text-foreground transition-colors hover:translate-x-1 inline-block">API Reference</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold mb-4 text-lg">Community</h4>
+                    <ul class="space-y-3 text-muted-foreground">
+                        <li><a href="https://github.com/ersinkoc/schemact" target="_blank" class="hover:text-foreground transition-colors hover:translate-x-1 inline-block">GitHub</a></li>
+                        <li><a href="https://github.com/ersinkoc/schemact/issues" target="_blank" class="hover:text-foreground transition-colors hover:translate-x-1 inline-block">Issues</a></li>
+                        <li><a href="https://github.com/ersinkoc/schemact/discussions" target="_blank" class="hover:text-foreground transition-colors hover:translate-x-1 inline-block">Discussions</a></li>
+                        <li><a href="https://github.com/ersinkoc/schemact/blob/main/CONTRIBUTING.md" target="_blank" class="hover:text-foreground transition-colors hover:translate-x-1 inline-block">Contributing</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-muted-foreground text-sm">&copy; 2025 Schemact. Released under the MIT License.</p>
+                <div class="flex items-center gap-6 text-sm text-muted-foreground">
+                    <span class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        304 tests passing
+                    </span>
+                    <span>100% coverage</span>
+                    <span>Zero dependencies</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top Button -->
+    <button
+        x-data="{ show: false }"
+        x-init="window.addEventListener('scroll', () => { show = window.pageYOffset > 500 })"
+        x-show="show"
+        x-cloak
+        @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 scale-50"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-50"
+        class="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-r from-primary to-purple-600 text-white rounded-2xl shadow-xl hover:shadow-2xl flex items-center justify-center z-40 transform hover:-translate-y-1 hover:scale-110 transition-all duration-300 glow"
+    >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+        </svg>
+    </button>
+
+</body>
+</html>

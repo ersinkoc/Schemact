@@ -1,0 +1,402 @@
+/**
+ * MySQL SQL Generator
+ * Converts Schemact AST to MySQL DDL statements
+ */
+
+import {
+  SchemaAST,
+  ModelNode,
+  ColumnNode,
+  DecoratorNode,
+  GeneratorError,
+} from '../ast/types.js';
+import { SqlGenerator } from './base.js';
+import { escapeMySQLIdentifier, escapeSqlStringLiteral } from '../utils/sql-identifier-escape.js';
+
+/**
+ * Configuration options for MySQL generator
+ */
+export interface MySQLGeneratorOptions {
+  /** Database engine (default: InnoDB) */
+  engine?: string;
+  /** Character set (default: utf8mb4) */
+  charset?: string;
+  /** Collation (default: utf8mb4_unicode_ci) */
+  collation?: string;
+}
+
+export class MySQLGenerator implements SqlGenerator {
+  private readonly options: Required<MySQLGeneratorOptions>;
+
+  constructor(options?: MySQLGeneratorOptions) {
+    // FIX BUG-014: Make MySQL charset, collation, and engine configurable
+    this.options = {
+      engine: options?.engine ?? 'InnoDB',
+      charset: options?.charset ?? 'utf8mb4',
+      collation: options?.collation ?? 'utf8mb4_unicode_ci',
+    };
+  }
+  generateUp(ast: SchemaAST): string[] {
+    const statements: string[] = [];
+
+    // Generate CREATE TABLE statements for each model
+    for (const model of ast.models) {
+      statements.push(this.generateCreateTable(model));
+    }
+
+    // Add raw SQL statements
+    for (const raw of ast.rawSql) {
+      statements.push(raw.sql);
+    }
+
+    return statements;
+  }
+
+  generateDown(ast: SchemaAST): string[] {
+    const statements: string[] = [];
+
+    // Generate DROP TABLE statements in reverse order
+    // MySQL doesn't have CASCADE for DROP TABLE, handle foreign keys first
+    for (let i = ast.models.length - 1; i >= 0; i--) {
+      const model = ast.models[i];
+      // FIX BUG-022: Use safe identifier escaping for model names
+      const tableName = escapeMySQLIdentifier(model.name);
+      statements.push(`DROP TABLE IF EXISTS ${tableName};`);
+    }
+
+    return statements;
+  }
+
+  private generateCreateTable(model: ModelNode): string {
+    const lines: string[] = [];
+    // FIX BUG-022: Use safe identifier escaping for model names
+    const tableName = escapeMySQLIdentifier(model.name);
+    lines.push(`CREATE TABLE ${tableName} (`);
+
+    const columnDefs: string[] = [];
+    const constraints: string[] = [];
+
+    for (const column of model.columns) {
+      const { columnDef, constraint } = this.generateColumn(column, model.name);
+      columnDefs.push(columnDef);
+      if (constraint) {
+        constraints.push(constraint);
+      }
+    }
+
+    // Combine column definitions and constraints
+    const allDefs = [...columnDefs, ...constraints];
+    lines.push(allDefs.map((def) => `  ${def}`).join(',\n'));
+
+    // FIX BUG-014: Use configurable engine, charset, and collation
+    lines.push(
+      `) ENGINE=${this.options.engine} DEFAULT CHARSET=${this.options.charset} COLLATE=${this.options.collation};`
+    );
+
+    return lines.join('\n');
+  }
+
+  private generateColumn(
+    column: ColumnNode,
+    modelName: string
+  ): { columnDef: string; constraint: string | null } {
+    const parts: string[] = [];
+
+    // FIX BUG-026: Use safe identifier escaping for column names
+    const columnName = escapeMySQLIdentifier(column.name);
+    parts.push(columnName);
+
+    // Column type
+    parts.push(this.mapType(column.type, column.typeArgs, column.name, modelName));
+
+    let constraint: string | null = null;
+    let isPrimaryKey = false;
+
+    // Process decorators
+    for (const decorator of column.decorators) {
+      switch (decorator.name) {
+        case 'pk':
+          // FIX BUG-041: Validate no arguments provided
+          if (decorator.args && decorator.args.length > 0) {
+            throw new GeneratorError(
+              `@pk decorator on column "${modelName}.${column.name}" does not accept arguments, but ${decorator.args.length} were provided`
+            );
+          }
+          isPrimaryKey = true;
+          // For MySQL, PRIMARY KEY comes after AUTO_INCREMENT
+          break;
+
+        case 'unique':
+          // FIX BUG-041: Validate no arguments provided
+          if (decorator.args && decorator.args.length > 0) {
+            throw new GeneratorError(
+              `@unique decorator on column "${modelName}.${column.name}" does not accept arguments, but ${decorator.args.length} were provided`
+            );
+          }
+          parts.push('UNIQUE');
+          break;
+
+        case 'notnull':
+          // FIX BUG-041: Validate no arguments provided
+          if (decorator.args && decorator.args.length > 0) {
+            throw new GeneratorError(
+              `@notnull decorator on column "${modelName}.${column.name}" does not accept arguments, but ${decorator.args.length} were provided`
+            );
+          }
+          parts.push('NOT NULL');
+          break;
+
+        case 'default':
+          // FIX BUG-019 & BUG-028: Validate decorator arguments
+          if (!decorator.args || decorator.args.length === 0) {
+            throw new GeneratorError(
+              `@default decorator on column "${modelName}.${column.name}" requires a default value argument`
+            );
+          }
+          if (decorator.args.length > 1) {
+            throw new GeneratorError(
+              `@default decorator on column "${modelName}.${column.name}" accepts only one argument, got ${decorator.args.length}`
+            );
+          }
+          const defaultValue = this.formatDefaultValue(decorator.args[0]);
+          parts.push(`DEFAULT ${defaultValue}`);
+          break;
+
+        case 'ref':
+          // FIX BUG-019 & BUG-028: Validate decorator arguments
+          if (!decorator.args || decorator.args.length === 0) {
+            throw new GeneratorError(
+              `@ref decorator on column "${modelName}.${column.name}" requires a reference argument (e.g., @ref(Table.column))`
+            );
+          }
+          if (decorator.args.length > 1) {
+            throw new GeneratorError(
+              `@ref decorator on column "${modelName}.${column.name}" accepts only one argument, got ${decorator.args.length}`
+            );
+          }
+          const ref = this.parseReference(decorator.args[0]);
+          const onDelete = this.findOnDelete(column.decorators);
+          const fkConstraint = this.generateForeignKey(
+            column.name,
+            ref.table,
+            ref.column,
+            onDelete
+          );
+          constraint = fkConstraint;
+          break;
+
+        // FIX BUG-043: Validate onDelete is used with @ref
+        case 'onDelete':
+          // Check if there's a @ref decorator
+          const hasRef = column.decorators.some(d => d.name === 'ref');
+          if (!hasRef) {
+            throw new GeneratorError(
+              `@onDelete decorator on column "${modelName}.${column.name}" ` +
+              `requires a @ref decorator (e.g., @ref(Table.column) @onDelete(CASCADE))`
+            );
+          }
+          // If it has @ref, it will be handled there, so just skip here
+          break;
+
+        default:
+          // FIX BUG-032: Add model/column context to error messages
+          throw new GeneratorError(
+            `Unknown decorator @${decorator.name} on column "${modelName}.${column.name}"`
+          );
+      }
+    }
+
+    // Add PRIMARY KEY at the end for MySQL
+    if (isPrimaryKey) {
+      parts.push('PRIMARY KEY');
+    }
+
+    return {
+      columnDef: parts.join(' '),
+      constraint,
+    };
+  }
+
+  private mapType(type: string, args?: string[], columnName?: string, modelName?: string): string {
+    switch (type) {
+      case 'Serial':
+        return 'INT AUTO_INCREMENT';
+
+      case 'Int':
+        return 'INT';
+
+      case 'BigInt':
+        return 'BIGINT';
+
+      case 'SmallInt':
+        return 'SMALLINT';
+
+      case 'VarChar':
+        if (args && args.length > 0) {
+          return `VARCHAR(${args[0]})`;
+        }
+        return 'VARCHAR(255)';
+
+      case 'Char':
+        if (args && args.length > 0) {
+          return `CHAR(${args[0]})`;
+        }
+        return 'CHAR(1)';
+
+      case 'Text':
+        return 'TEXT';
+
+      case 'Boolean':
+        return 'BOOLEAN'; // MySQL maps this to TINYINT(1)
+
+      case 'Timestamp':
+        return 'TIMESTAMP';
+
+      case 'Date':
+        return 'DATE';
+
+      case 'Time':
+        return 'TIME';
+
+      case 'Decimal':
+      case 'Numeric':
+        if (args && args.length >= 2) {
+          return `DECIMAL(${args[0]}, ${args[1]})`;
+        } else if (args && args.length === 1) {
+          return `DECIMAL(${args[0]})`;
+        }
+        return 'DECIMAL(10, 2)';
+
+      case 'Real':
+        return 'FLOAT';
+
+      case 'DoublePrecision':
+        return 'DOUBLE';
+
+      case 'Json':
+        return 'JSON'; // MySQL 5.7+
+
+      case 'Jsonb':
+        // MySQL doesn't have JSONB, use JSON instead
+        return 'JSON';
+
+      case 'Uuid':
+        return 'CHAR(36)'; // UUID format: 8-4-4-4-12
+
+      case 'Enum':
+        if (args && args.length > 0) {
+          // FIX BUG-024: Escape enum values to prevent SQL injection
+          const values = args.map((v) => escapeSqlStringLiteral(v)).join(', ');
+          return `ENUM(${values})`;
+        }
+        // FIX BUG-032: Add model/column context to error messages
+        const enumContext = modelName && columnName ? ` on column "${modelName}.${columnName}"` : '';
+        throw new GeneratorError(`Enum type requires values${enumContext}`);
+
+      default:
+        // FIX BUG-032: Add model/column context to error messages
+        const typeContext = modelName && columnName ? ` for column "${modelName}.${columnName}"` : '';
+        throw new GeneratorError(`Unknown type: ${type}${typeContext}`);
+    }
+  }
+
+  private formatDefaultValue(value: string): string {
+    // Handle special keywords
+    if (value.toLowerCase() === 'now') {
+      return 'CURRENT_TIMESTAMP';
+    }
+
+    if (value.toLowerCase() === 'true') {
+      return '1';
+    }
+
+    if (value.toLowerCase() === 'false') {
+      return '0';
+    }
+
+    // Handle numbers
+    if (/^-?\d+(\.\d+)?$/.test(value)) {
+      return value;
+    }
+
+    // FIX BUG-025: Use safe string literal escaping for default values
+    return escapeSqlStringLiteral(value);
+  }
+
+  private parseReference(ref: string): { table: string; column: string } {
+    const parts = ref.split('.');
+    if (parts.length !== 2) {
+      throw new GeneratorError(`Invalid reference format: ${ref}. Expected Table.column`);
+    }
+
+    // FIX BUG-031: Validate table and column names are valid SQL identifiers
+    const table = parts[0].trim();
+    const column = parts[1].trim();
+
+    // FIX BUG-036: Update regex to allow hyphens, matching escapeSqlIdentifier validation
+    // Validate table name
+    if (!/^[a-zA-Z_][a-zA-Z0-9_\-]*$/.test(table)) {
+      throw new GeneratorError(
+        `Invalid table name in reference "${ref}": "${table}" is not a valid SQL identifier. ` +
+        `Table names must start with a letter or underscore and contain only letters, numbers, underscores, and hyphens.`
+      );
+    }
+
+    // Validate column name
+    if (!/^[a-zA-Z_][a-zA-Z0-9_\-]*$/.test(column)) {
+      throw new GeneratorError(
+        `Invalid column name in reference "${ref}": "${column}" is not a valid SQL identifier. ` +
+        `Column names must start with a letter or underscore and contain only letters, numbers, underscores, and hyphens.`
+      );
+    }
+
+    return { table, column };
+  }
+
+  private findOnDelete(decorators: DecoratorNode[]): string | undefined {
+    const onDeleteDecorator = decorators.find((d) => d.name === 'onDelete');
+    if (!onDeleteDecorator) {
+      return undefined;
+    }
+
+    // FIX BUG-019 & BUG-028: Validate onDelete decorator arguments
+    if (!onDeleteDecorator.args || onDeleteDecorator.args.length === 0) {
+      throw new GeneratorError(
+        '@onDelete decorator requires an action argument (CASCADE, SET NULL, SET DEFAULT, RESTRICT, NO ACTION)'
+      );
+    }
+
+    const action = onDeleteDecorator.args[0].toUpperCase();
+    const validActions = ['CASCADE', 'SET NULL', 'SET DEFAULT', 'RESTRICT', 'NO ACTION'];
+
+    if (!validActions.includes(action)) {
+      throw new GeneratorError(
+        `@onDelete action "${onDeleteDecorator.args[0]}" is invalid. ` +
+        `Must be one of: ${validActions.join(', ')}`
+      );
+    }
+
+    return onDeleteDecorator.args[0];
+  }
+
+  private generateForeignKey(
+    columnName: string,
+    refTable: string,
+    refColumn: string,
+    onDelete?: string
+  ): string {
+    // FIX BUG-026: Use safe identifier escaping for foreign key references
+    const safeColumnName = escapeMySQLIdentifier(columnName);
+    const safeRefTable = escapeMySQLIdentifier(refTable);
+    const safeRefColumn = escapeMySQLIdentifier(refColumn);
+
+    let fk = `FOREIGN KEY (${safeColumnName}) REFERENCES ${safeRefTable}(${safeRefColumn})`;
+
+    if (onDelete) {
+      const action = onDelete.toUpperCase();
+      fk += ` ON DELETE ${action}`;
+    }
+
+    return fk;
+  }
+}

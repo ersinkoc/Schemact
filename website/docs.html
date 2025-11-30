@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Schemact Documentation - Complete guide to zero-dependency database schema management">
+    <link rel="canonical" href="https://schemact.oxog.dev/docs.html">
+    <title>Documentation - Schemact</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Custom Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        border: "hsl(214.3 31.8% 91.4%)",
+                        input: "hsl(214.3 31.8% 91.4%)",
+                        ring: "hsl(221.2 83.2% 53.3%)",
+                        background: "hsl(0 0% 100%)",
+                        foreground: "hsl(222.2 84% 4.9%)",
+                        primary: {
+                            DEFAULT: "hsl(221.2 83.2% 53.3%)",
+                            foreground: "hsl(210 40% 98%)",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(210 40% 96.1%)",
+                            foreground: "hsl(222.2 47.4% 11.2%)",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(210 40% 96.1%)",
+                            foreground: "hsl(215.4 16.3% 46.9%)",
+                        },
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        .prose code { background: #f1f5f9; padding: 0.125rem 0.25rem; border-radius: 0.25rem; font-size: 0.875em; }
+        .prose pre code { background: transparent; padding: 0; }
+    </style>
+</head>
+<body class="bg-background text-foreground antialiased">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full bg-background/95 backdrop-blur z-50 border-b border-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-2">
+                    <a href="index.html" class="flex items-center space-x-2">
+                        <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        <span class="text-2xl font-bold">Schemact</span>
+                    </a>
+                    <span class="text-muted-foreground">/ Docs</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-muted-foreground hover:text-foreground transition-colors">Home</a>
+                    <a href="#getting-started" class="text-muted-foreground hover:text-foreground transition-colors">Getting Started</a>
+                    <a href="#dsl-reference" class="text-muted-foreground hover:text-foreground transition-colors">DSL Reference</a>
+                    <a href="#cli-reference" class="text-muted-foreground hover:text-foreground transition-colors">CLI</a>
+                    <a href="#api-reference" class="text-muted-foreground hover:text-foreground transition-colors">API</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex pt-16">
+        <!-- Sidebar -->
+        <aside class="hidden lg:block w-64 fixed left-0 top-16 h-[calc(100vh-4rem)] overflow-y-auto border-r border-border p-6">
+            <nav class="space-y-6">
+                <div>
+                    <h3 class="font-bold text-sm uppercase text-muted-foreground mb-3">Getting Started</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#installation" class="text-muted-foreground hover:text-foreground">Installation</a></li>
+                        <li><a href="#quick-start" class="text-muted-foreground hover:text-foreground">Quick Start</a></li>
+                        <li><a href="#configuration" class="text-muted-foreground hover:text-foreground">Configuration</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm uppercase text-muted-foreground mb-3">DSL Reference</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#models" class="text-muted-foreground hover:text-foreground">Models</a></li>
+                        <li><a href="#data-types" class="text-muted-foreground hover:text-foreground">Data Types</a></li>
+                        <li><a href="#decorators" class="text-muted-foreground hover:text-foreground">Decorators</a></li>
+                        <li><a href="#relationships" class="text-muted-foreground hover:text-foreground">Relationships</a></li>
+                        <li><a href="#indexes" class="text-muted-foreground hover:text-foreground">Indexes</a></li>
+                        <li><a href="#enums" class="text-muted-foreground hover:text-foreground">Enums</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm uppercase text-muted-foreground mb-3">CLI Reference</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#cli-init" class="text-muted-foreground hover:text-foreground">schemact init</a></li>
+                        <li><a href="#cli-new" class="text-muted-foreground hover:text-foreground">schemact new</a></li>
+                        <li><a href="#cli-up" class="text-muted-foreground hover:text-foreground">schemact up</a></li>
+                        <li><a href="#cli-down" class="text-muted-foreground hover:text-foreground">schemact down</a></li>
+                        <li><a href="#cli-status" class="text-muted-foreground hover:text-foreground">schemact status</a></li>
+                        <li><a href="#cli-generate" class="text-muted-foreground hover:text-foreground">schemact generate</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm uppercase text-muted-foreground mb-3">API Reference</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#api-lexer" class="text-muted-foreground hover:text-foreground">Lexer</a></li>
+                        <li><a href="#api-parser" class="text-muted-foreground hover:text-foreground">Parser</a></li>
+                        <li><a href="#api-generators" class="text-muted-foreground hover:text-foreground">Generators</a></li>
+                        <li><a href="#api-ledger" class="text-muted-foreground hover:text-foreground">Ledger</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm uppercase text-muted-foreground mb-3">Advanced</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#security" class="text-muted-foreground hover:text-foreground">Security</a></li>
+                        <li><a href="#architecture" class="text-muted-foreground hover:text-foreground">Architecture</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-64 p-6 lg:p-12 max-w-4xl">
+
+            <!-- Getting Started -->
+            <section id="getting-started" class="mb-16">
+                <h1 class="text-4xl font-bold mb-8">Documentation</h1>
+                <p class="text-xl text-muted-foreground mb-8">
+                    Complete guide to Schemact - a zero-dependency, AST-based database schema management tool.
+                </p>
+
+                <div id="installation" class="mb-12">
+                    <h2 class="text-2xl font-bold mb-4">Installation</h2>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code># npm
+npm install schemact
+
+# yarn
+yarn add schemact
+
+# pnpm
+pnpm add schemact</code></pre>
+                    </div>
+                    <p class="text-muted-foreground">Schemact has <strong>zero dependencies</strong> - it only uses Node.js built-in modules.</p>
+                </div>
+
+                <div id="quick-start" class="mb-12">
+                    <h2 class="text-2xl font-bold mb-4">Quick Start</h2>
+
+                    <h3 class="text-lg font-semibold mb-2">1. Initialize Project</h3>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code>schemact init</code></pre>
+                    </div>
+                    <p class="text-muted-foreground mb-6">Creates <code>schemact.config.js</code> and <code>migrations/</code> directory.</p>
+
+                    <h3 class="text-lg font-semibold mb-2">2. Create a Migration</h3>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code>schemact new create_users</code></pre>
+                    </div>
+                    <p class="text-muted-foreground mb-6">Creates <code>migrations/001_create_users.sigl</code></p>
+
+                    <h3 class="text-lg font-semibold mb-2">3. Define Your Schema</h3>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code><span class="text-blue-400">model</span> <span class="text-yellow-400">User</span> {
+  id <span class="text-purple-400">Serial</span> <span class="text-pink-400">@pk</span>
+  email <span class="text-purple-400">VarChar</span>(<span class="text-orange-400">255</span>) <span class="text-pink-400">@unique</span> <span class="text-pink-400">@notnull</span>
+  name <span class="text-purple-400">Text</span>
+  role <span class="text-purple-400">VarChar</span>(<span class="text-orange-400">50</span>) <span class="text-pink-400">@default</span>(<span class="text-green-400">'user'</span>)
+  createdAt <span class="text-purple-400">Timestamp</span> <span class="text-pink-400">@default</span>(<span class="text-orange-400">CURRENT_TIMESTAMP</span>)
+}</code></pre>
+                    </div>
+
+                    <h3 class="text-lg font-semibold mb-2">4. Generate SQL</h3>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code>schemact generate --dialect postgres</code></pre>
+                    </div>
+
+                    <h3 class="text-lg font-semibold mb-2">5. Apply Migrations</h3>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code>schemact up</code></pre>
+                    </div>
+                </div>
+
+                <div id="configuration" class="mb-12">
+                    <h2 class="text-2xl font-bold mb-4">Configuration</h2>
+                    <p class="text-muted-foreground mb-4">Create <code>schemact.config.js</code> in your project root:</p>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code><span class="text-blue-400">export default</span> {
+  <span class="text-gray-400">// Database dialect: 'postgres', 'mysql', or 'sqlite'</span>
+  dialect: <span class="text-green-400">'postgres'</span>,
+
+  <span class="text-gray-400">// Directory for migration files</span>
+  migrationsDir: <span class="text-green-400">'./migrations'</span>,
+
+  <span class="text-gray-400">// Output directory for generated SQL</span>
+  outputDir: <span class="text-green-400">'./sql'</span>,
+
+  <span class="text-gray-400">// Ledger file for tracking applied migrations</span>
+  ledgerFile: <span class="text-green-400">'.schemact.ledger.json'</span>,
+
+  <span class="text-gray-400">// Security limits</span>
+  maxMigrationFileSize: <span class="text-orange-400">5 * 1024 * 1024</span>,  <span class="text-gray-400">// 5MB</span>
+  maxTotalMigrationsSize: <span class="text-orange-400">50 * 1024 * 1024</span>, <span class="text-gray-400">// 50MB</span>
+
+  <span class="text-gray-400">// Logging options</span>
+  logging: {
+    console: <span class="text-orange-400">true</span>,
+    file: <span class="text-green-400">'.schemact.log'</span>,
+    level: <span class="text-green-400">'INFO'</span>,
+    auditTrail: <span class="text-orange-400">true</span>
+  }
+};</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DSL Reference -->
+            <section id="dsl-reference" class="mb-16">
+                <h1 class="text-3xl font-bold mb-8">DSL Reference</h1>
+
+                <div id="models" class="mb-12">
+                    <h2 class="text-2xl font-bold mb-4">Models</h2>
+                    <p class="text-muted-foreground mb-4">Models define database tables. Each model has a name and a list of fields.</p>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code><span class="text-blue-400">model</span> <span class="text-yellow-400">TableName</span> {
+  fieldName <span class="text-purple-400">DataType</span> <span class="text-pink-400">@decorators</span>
+}</code></pre>
+                    </div>
+                </div>
+
+                <div id="data-types" class="mb-12">
+                    <h2 class="text-2xl font-bold mb-4">Data Types</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm border border-border rounded-lg">
+                            <thead class="bg-muted">
+                                <tr>
+                                    <th class="text-left p-3 border-b border-border">Type</th>
+                                    <th class="text-left p-3 border-b border-border">PostgreSQL</th>
+                                    <th class="text-left p-3 border-b border-border">MySQL</th>
+                                    <th class="text-left p-3 border-b border-border">SQLite</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="p-3 border-b border-border font-mono">Int</td><td class="p-3 border-b border-border">INTEGER</td><td class="p-3 border-b border-border">INT</td><td class="p-3 border-b border-border">INTEGER</td></tr>
+                                <tr><td class="p-3 border-b border-border font-mono">BigInt</td><td class="p-3 border-b border-border">BIGINT</td><td class="p-3 border-b border-border">BIGINT</td><td class="p-3 border-b border-border">INTEGER</td></tr>
+                                <tr><td class="p-3 border-b border-border font-mono">SmallInt</td><td class="p-3 border-b border-border">SMALLINT</td><td class="p-3 border-b border-border">SMALLINT</td><td class="p-3 border-b border-border">INTEGER</td></tr>
+                                <tr><td class="p-3 border-b border-border font-mono">Serial</td><td class="p-3 border-b border-border">SERIAL</td><td class="p-3 border-b border-border">INT AUTO_INCREMENT</td><td class="p-3 border-b border-border">INTEGER PRIMARY KEY AUTOINCREMENT</td></tr>
+                                <tr><td class="p-3 border-b border-border font-mono">BigSerial</td><td class="p-3 border-b border-border">BIGSERIAL</td><td class="p-3 border-b border-border">BIGINT AUTO_INCREMENT</td><td class="p-3 border-b border-border">INTEGER PRIMARY KEY AUTOINCREMENT</td></tr>
+                                <tr><td class="p-3 border-b border-border font-mono">Float</td><td class="p-3 border-b border-border">REAL</td><td class="p-3 border-b border-border">FLOAT</td><td class="p-3 border-b border-border">REAL</td></tr>
+                                <tr><td class="p-3 border-b border-border font-mono">Double</td><td class="p-3 border-b border-border">DOUBLE PRECISION</td><td class="p-3 border-b border-border">DOUBLE</td><td class="p-3 border-b border-border">REAL</td></tr>
+                                <tr><td class="p-3 border-b border-border font-mono">Decimal(p,s)</td><td class="p-3 border-b border-border">DECIMAL(p,s)</td><td class="p-3 border-b border-border">DECIMAL(p,s)</td><td class="p-3 border-b border-border">NUMERIC</td></tr>
+                                <tr><td class="p-3 border-b border-border font-mono">Boolean</td><td class="p-3 border-b border-border">BOOLEAN</td><td class="p-3 border-b border-border">TINYINT(1)</td><td class="p-3 border-b border-border">INTEGER</td></tr>
+                                <tr><td class="p-3 border-b border-border font-mono">VarChar(n)</td><td class="p-3 border-b border-border">VARCHAR(n)</td><td class="p-3 border-b border-border">VARCHAR(n)</td><td class="p-3 border-b border-border">TEXT</td></tr>
+                                <tr><td class="p-3 border-b border-border font-mono">Char(n)</td><td class="p-3 border-b border-border">CHAR(n)</td><td class="p-3 border-b border-border">CHAR(n)</td><td class="p-3 border-b border-border">TEXT</td></tr>
+                                <tr><td class="p-3 border-b border-border font-mono">Text</td><td class="p-3 border-b border-border">TEXT</td><td class="p-3 border-b border-border">TEXT</td><td class="p-3 border-b border-border">TEXT</td></tr>
+                                <tr><td class="p-3 border-b border-border font-mono">Date</td><td class="p-3 border-b border-border">DATE</td><td class="p-3 border-b border-border">DATE</td><td class="p-3 border-b border-border">TEXT</td></tr>
+                                <tr><td class="p-3 border-b border-border font-mono">Time</td><td class="p-3 border-b border-border">TIME</td><td class="p-3 border-b border-border">TIME</td><td class="p-3 border-b border-border">TEXT</td></tr>
+                                <tr><td class="p-3 border-b border-border font-mono">Timestamp</td><td class="p-3 border-b border-border">TIMESTAMP</td><td class="p-3 border-b border-border">TIMESTAMP</td><td class="p-3 border-b border-border">TEXT</td></tr>
+                                <tr><td class="p-3 border-b border-border font-mono">UUID</td><td class="p-3 border-b border-border">UUID</td><td class="p-3 border-b border-border">CHAR(36)</td><td class="p-3 border-b border-border">TEXT</td></tr>
+                                <tr><td class="p-3 border-b border-border font-mono">JSON</td><td class="p-3 border-b border-border">JSONB</td><td class="p-3 border-b border-border">JSON</td><td class="p-3 border-b border-border">TEXT</td></tr>
+                                <tr><td class="p-3 font-mono">Blob</td><td class="p-3">BYTEA</td><td class="p-3">BLOB</td><td class="p-3">BLOB</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="decorators" class="mb-12">
+                    <h2 class="text-2xl font-bold mb-4">Decorators</h2>
+                    <p class="text-muted-foreground mb-4">Decorators add constraints and behaviors to fields.</p>
+
+                    <div class="space-y-4">
+                        <div class="border border-border rounded-lg p-4">
+                            <h3 class="font-bold font-mono text-primary">@pk</h3>
+                            <p class="text-sm text-muted-foreground">Primary key constraint</p>
+                            <div class="bg-slate-900 rounded p-2 mt-2"><code class="text-green-400 text-sm">id Int @pk</code></div>
+                        </div>
+
+                        <div class="border border-border rounded-lg p-4">
+                            <h3 class="font-bold font-mono text-primary">@unique</h3>
+                            <p class="text-sm text-muted-foreground">Unique constraint</p>
+                            <div class="bg-slate-900 rounded p-2 mt-2"><code class="text-green-400 text-sm">email VarChar(255) @unique</code></div>
+                        </div>
+
+                        <div class="border border-border rounded-lg p-4">
+                            <h3 class="font-bold font-mono text-primary">@notnull</h3>
+                            <p class="text-sm text-muted-foreground">NOT NULL constraint</p>
+                            <div class="bg-slate-900 rounded p-2 mt-2"><code class="text-green-400 text-sm">name Text @notnull</code></div>
+                        </div>
+
+                        <div class="border border-border rounded-lg p-4">
+                            <h3 class="font-bold font-mono text-primary">@default(value)</h3>
+                            <p class="text-sm text-muted-foreground">Default value. Use quotes for strings.</p>
+                            <div class="bg-slate-900 rounded p-2 mt-2"><code class="text-green-400 text-sm">role VarChar(50) @default('user')<br>count Int @default(0)<br>createdAt Timestamp @default(CURRENT_TIMESTAMP)</code></div>
+                        </div>
+
+                        <div class="border border-border rounded-lg p-4">
+                            <h3 class="font-bold font-mono text-primary">@check(expression)</h3>
+                            <p class="text-sm text-muted-foreground">CHECK constraint</p>
+                            <div class="bg-slate-900 rounded p-2 mt-2"><code class="text-green-400 text-sm">age Int @check(age >= 0)<br>price Decimal(10,2) @check(price > 0)</code></div>
+                        </div>
+
+                        <div class="border border-border rounded-lg p-4">
+                            <h3 class="font-bold font-mono text-primary">@references(Table.field)</h3>
+                            <p class="text-sm text-muted-foreground">Foreign key reference</p>
+                            <div class="bg-slate-900 rounded p-2 mt-2"><code class="text-green-400 text-sm">userId Int @references(User.id)</code></div>
+                        </div>
+
+                        <div class="border border-border rounded-lg p-4">
+                            <h3 class="font-bold font-mono text-primary">@onDelete(action) / @onUpdate(action)</h3>
+                            <p class="text-sm text-muted-foreground">Referential actions. Multi-word actions must be quoted.</p>
+                            <div class="bg-slate-900 rounded p-2 mt-2"><code class="text-green-400 text-sm">userId Int @references(User.id) @onDelete(CASCADE)<br>parentId Int @references(Category.id) @onDelete('SET NULL')</code></div>
+                            <p class="text-xs text-muted-foreground mt-2">Actions: CASCADE, RESTRICT, 'NO ACTION', 'SET NULL', 'SET DEFAULT'</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="relationships" class="mb-12">
+                    <h2 class="text-2xl font-bold mb-4">Relationships</h2>
+                    <p class="text-muted-foreground mb-4">Define foreign key relationships between models.</p>
+
+                    <h3 class="text-lg font-semibold mb-2">One-to-Many</h3>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-6">
+                        <pre class="text-green-400 font-mono text-sm"><code><span class="text-blue-400">model</span> <span class="text-yellow-400">User</span> {
+  id <span class="text-purple-400">Serial</span> <span class="text-pink-400">@pk</span>
+  name <span class="text-purple-400">Text</span>
+}
+
+<span class="text-blue-400">model</span> <span class="text-yellow-400">Post</span> {
+  id <span class="text-purple-400">Serial</span> <span class="text-pink-400">@pk</span>
+  title <span class="text-purple-400">Text</span>
+  authorId <span class="text-purple-400">Int</span> <span class="text-pink-400">@references</span>(User.id) <span class="text-pink-400">@onDelete</span>(CASCADE)
+}</code></pre>
+                    </div>
+
+                    <h3 class="text-lg font-semibold mb-2">Many-to-Many</h3>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code><span class="text-blue-400">model</span> <span class="text-yellow-400">User</span> {
+  id <span class="text-purple-400">Serial</span> <span class="text-pink-400">@pk</span>
+}
+
+<span class="text-blue-400">model</span> <span class="text-yellow-400">Role</span> {
+  id <span class="text-purple-400">Serial</span> <span class="text-pink-400">@pk</span>
+  name <span class="text-purple-400">VarChar</span>(50) <span class="text-pink-400">@unique</span>
+}
+
+<span class="text-blue-400">model</span> <span class="text-yellow-400">UserRole</span> {
+  userId <span class="text-purple-400">Int</span> <span class="text-pink-400">@references</span>(User.id) <span class="text-pink-400">@onDelete</span>(CASCADE)
+  roleId <span class="text-purple-400">Int</span> <span class="text-pink-400">@references</span>(Role.id) <span class="text-pink-400">@onDelete</span>(CASCADE)
+
+  <span class="text-pink-400">@@pk</span>(userId, roleId)
+}</code></pre>
+                    </div>
+                </div>
+
+                <div id="indexes" class="mb-12">
+                    <h2 class="text-2xl font-bold mb-4">Indexes</h2>
+                    <p class="text-muted-foreground mb-4">Define indexes for better query performance.</p>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code><span class="text-blue-400">model</span> <span class="text-yellow-400">User</span> {
+  id <span class="text-purple-400">Serial</span> <span class="text-pink-400">@pk</span>
+  email <span class="text-purple-400">VarChar</span>(255)
+  name <span class="text-purple-400">Text</span>
+  createdAt <span class="text-purple-400">Timestamp</span>
+
+  <span class="text-gray-400">// Single column index</span>
+  <span class="text-pink-400">@@index</span>(email)
+
+  <span class="text-gray-400">// Composite index</span>
+  <span class="text-pink-400">@@index</span>(name, createdAt)
+
+  <span class="text-gray-400">// Unique index</span>
+  <span class="text-pink-400">@@unique</span>(email)
+}</code></pre>
+                    </div>
+                </div>
+
+                <div id="enums" class="mb-12">
+                    <h2 class="text-2xl font-bold mb-4">Enums</h2>
+                    <p class="text-muted-foreground mb-4">Define enumerated types for constrained values.</p>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code><span class="text-blue-400">enum</span> <span class="text-yellow-400">Status</span> {
+  PENDING
+  ACTIVE
+  ARCHIVED
+}
+
+<span class="text-blue-400">model</span> <span class="text-yellow-400">Task</span> {
+  id <span class="text-purple-400">Serial</span> <span class="text-pink-400">@pk</span>
+  title <span class="text-purple-400">Text</span>
+  status <span class="text-purple-400">Status</span> <span class="text-pink-400">@default</span>(PENDING)
+}</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CLI Reference -->
+            <section id="cli-reference" class="mb-16">
+                <h1 class="text-3xl font-bold mb-8">CLI Reference</h1>
+
+                <div id="cli-init" class="mb-8">
+                    <h2 class="text-xl font-bold mb-3 font-mono">schemact init</h2>
+                    <p class="text-muted-foreground mb-4">Initialize a new Schemact project.</p>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code>schemact init [options]
+
+Options:
+  --dialect &lt;type&gt;    Database dialect (postgres|mysql|sqlite)
+  --dir &lt;path&gt;        Migrations directory (default: ./migrations)</code></pre>
+                    </div>
+                </div>
+
+                <div id="cli-new" class="mb-8">
+                    <h2 class="text-xl font-bold mb-3 font-mono">schemact new</h2>
+                    <p class="text-muted-foreground mb-4">Create a new migration file.</p>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code>schemact new &lt;name&gt;
+
+Examples:
+  schemact new create_users
+  schemact new add_email_to_posts</code></pre>
+                    </div>
+                </div>
+
+                <div id="cli-up" class="mb-8">
+                    <h2 class="text-xl font-bold mb-3 font-mono">schemact up</h2>
+                    <p class="text-muted-foreground mb-4">Apply pending migrations.</p>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code>schemact up [options]
+
+Options:
+  --dry-run           Show SQL without executing
+  --steps &lt;n&gt;         Apply only n migrations
+  --to &lt;name&gt;         Apply up to specific migration</code></pre>
+                    </div>
+                </div>
+
+                <div id="cli-down" class="mb-8">
+                    <h2 class="text-xl font-bold mb-3 font-mono">schemact down</h2>
+                    <p class="text-muted-foreground mb-4">Rollback migrations.</p>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code>schemact down [options]
+
+Options:
+  --dry-run           Show SQL without executing
+  --steps &lt;n&gt;         Rollback n migrations (default: 1)
+  --to &lt;name&gt;         Rollback to specific migration</code></pre>
+                    </div>
+                </div>
+
+                <div id="cli-status" class="mb-8">
+                    <h2 class="text-xl font-bold mb-3 font-mono">schemact status</h2>
+                    <p class="text-muted-foreground mb-4">Show migration status.</p>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code>schemact status
+
+Output:
+  Applied    001_create_users      2025-01-15 10:30:00
+  Applied    002_add_posts         2025-01-15 10:31:00
+  Pending    003_add_comments</code></pre>
+                    </div>
+                </div>
+
+                <div id="cli-generate" class="mb-8">
+                    <h2 class="text-xl font-bold mb-3 font-mono">schemact generate</h2>
+                    <p class="text-muted-foreground mb-4">Generate SQL from migration files.</p>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code>schemact generate [options]
+
+Options:
+  --dialect &lt;type&gt;    Target database (postgres|mysql|sqlite)
+  --output &lt;path&gt;     Output directory for SQL files
+  --file &lt;name&gt;       Generate for specific migration only</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- API Reference -->
+            <section id="api-reference" class="mb-16">
+                <h1 class="text-3xl font-bold mb-8">API Reference</h1>
+                <p class="text-muted-foreground mb-8">Schemact can be used programmatically in your Node.js applications.</p>
+
+                <div id="api-lexer" class="mb-12">
+                    <h2 class="text-2xl font-bold mb-4">Lexer</h2>
+                    <p class="text-muted-foreground mb-4">Tokenizes Schemact DSL source code.</p>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code><span class="text-blue-400">import</span> { Lexer } <span class="text-blue-400">from</span> <span class="text-green-400">'schemact'</span>;
+
+<span class="text-blue-400">const</span> source = <span class="text-green-400">`
+model User {
+  id Serial @pk
+  email VarChar(255) @unique
+}
+`</span>;
+
+<span class="text-blue-400">const</span> lexer = <span class="text-blue-400">new</span> Lexer(source);
+<span class="text-blue-400">const</span> tokens = lexer.tokenize();
+
+<span class="text-gray-400">// tokens: Token[]</span>
+<span class="text-gray-400">// [{ type: 'KEYWORD', value: 'model', line: 2, column: 1 }, ...]</span></code></pre>
+                    </div>
+                </div>
+
+                <div id="api-parser" class="mb-12">
+                    <h2 class="text-2xl font-bold mb-4">Parser</h2>
+                    <p class="text-muted-foreground mb-4">Parses tokens into an Abstract Syntax Tree (AST).</p>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code><span class="text-blue-400">import</span> { Parser } <span class="text-blue-400">from</span> <span class="text-green-400">'schemact'</span>;
+
+<span class="text-blue-400">const</span> parser = <span class="text-blue-400">new</span> Parser(tokens);
+<span class="text-blue-400">const</span> ast = parser.parse();
+
+<span class="text-gray-400">// ast: SchemaAST</span>
+<span class="text-gray-400">// { models: [...], enums: [...] }</span></code></pre>
+                    </div>
+                </div>
+
+                <div id="api-generators" class="mb-12">
+                    <h2 class="text-2xl font-bold mb-4">Generators</h2>
+                    <p class="text-muted-foreground mb-4">Generate SQL from AST for different databases.</p>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code><span class="text-blue-400">import</span> {
+  PostgresGenerator,
+  MySQLGenerator,
+  SQLiteGenerator
+} <span class="text-blue-400">from</span> <span class="text-green-400">'schemact'</span>;
+
+<span class="text-gray-400">// PostgreSQL</span>
+<span class="text-blue-400">const</span> pgGen = <span class="text-blue-400">new</span> PostgresGenerator();
+<span class="text-blue-400">const</span> pgSQL = pgGen.generate(ast);
+
+<span class="text-gray-400">// MySQL</span>
+<span class="text-blue-400">const</span> mysqlGen = <span class="text-blue-400">new</span> MySQLGenerator();
+<span class="text-blue-400">const</span> mysqlSQL = mysqlGen.generate(ast);
+
+<span class="text-gray-400">// SQLite</span>
+<span class="text-blue-400">const</span> sqliteGen = <span class="text-blue-400">new</span> SQLiteGenerator();
+<span class="text-blue-400">const</span> sqliteSQL = sqliteGen.generate(ast);</code></pre>
+                    </div>
+                </div>
+
+                <div id="api-ledger" class="mb-12">
+                    <h2 class="text-2xl font-bold mb-4">Ledger</h2>
+                    <p class="text-muted-foreground mb-4">Tracks applied migrations with integrity verification.</p>
+                    <div class="bg-slate-900 rounded-lg p-4 mb-4">
+                        <pre class="text-green-400 font-mono text-sm"><code><span class="text-blue-400">import</span> { Ledger } <span class="text-blue-400">from</span> <span class="text-green-400">'schemact'</span>;
+
+<span class="text-blue-400">const</span> ledger = <span class="text-blue-400">new</span> Ledger(<span class="text-green-400">'.schemact.ledger.json'</span>);
+
+<span class="text-gray-400">// Load existing ledger</span>
+<span class="text-blue-400">await</span> ledger.load();
+
+<span class="text-gray-400">// Get applied migrations</span>
+<span class="text-blue-400">const</span> applied = ledger.getApplied();
+
+<span class="text-gray-400">// Record a migration</span>
+<span class="text-blue-400">await</span> ledger.record({
+  name: <span class="text-green-400">'001_create_users'</span>,
+  hash: <span class="text-green-400">'sha256:...'</span>,
+  appliedAt: <span class="text-blue-400">new</span> Date()
+});
+
+<span class="text-gray-400">// Verify integrity</span>
+<span class="text-blue-400">const</span> isValid = <span class="text-blue-400">await</span> ledger.verifyIntegrity();</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Security & Architecture -->
+            <section id="security" class="mb-16">
+                <h1 class="text-3xl font-bold mb-8">Security</h1>
+                <p class="text-muted-foreground mb-6">Schemact is built with security as a top priority.</p>
+
+                <div class="grid gap-4">
+                    <div class="border border-border rounded-lg p-4">
+                        <h3 class="font-bold text-green-600 mb-2">SQL Injection Protection</h3>
+                        <p class="text-sm text-muted-foreground">All identifiers are properly escaped using database-specific methods. No user input is directly interpolated into SQL.</p>
+                    </div>
+                    <div class="border border-border rounded-lg p-4">
+                        <h3 class="font-bold text-green-600 mb-2">Path Traversal Prevention</h3>
+                        <p class="text-sm text-muted-foreground">Migration names are validated against path traversal attacks. Only alphanumeric characters, hyphens, and underscores are allowed.</p>
+                    </div>
+                    <div class="border border-border rounded-lg p-4">
+                        <h3 class="font-bold text-green-600 mb-2">Resource Exhaustion Protection</h3>
+                        <p class="text-sm text-muted-foreground">File size limits prevent DoS attacks via oversized migration files. Default limits: 5MB per file, 50MB total.</p>
+                    </div>
+                    <div class="border border-border rounded-lg p-4">
+                        <h3 class="font-bold text-green-600 mb-2">Race Condition Safe</h3>
+                        <p class="text-sm text-muted-foreground">File locking prevents concurrent modifications to the ledger file. Atomic operations ensure data integrity.</p>
+                    </div>
+                    <div class="border border-border rounded-lg p-4">
+                        <h3 class="font-bold text-green-600 mb-2">Integrity Verification</h3>
+                        <p class="text-sm text-muted-foreground">SHA-256 checksums verify migration file integrity. Tampering detection prevents unauthorized changes.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="architecture" class="mb-16">
+                <h1 class="text-3xl font-bold mb-8">Architecture</h1>
+                <p class="text-muted-foreground mb-6">Schemact uses a clean compiler pipeline architecture.</p>
+
+                <div class="bg-muted rounded-lg p-6 mb-6">
+                    <pre class="text-sm font-mono text-center">
+┌─────────┐    ┌────────┐    ┌─────┐    ┌───────────┐    ┌─────┐
+│  .sact  │ -> │ Lexer  │ -> │ AST │ -> │ Generator │ -> │ SQL │
+│  File   │    │Tokenize│    │     │    │  (target) │    │     │
+└─────────┘    └────────┘    └─────┘    └───────────┘    └─────┘
+                    </pre>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-bold mb-2">1. Lexer (Tokenization)</h3>
+                        <p class="text-sm text-muted-foreground">Converts source code into tokens with type, value, line, and column information.</p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold mb-2">2. Parser (AST Generation)</h3>
+                        <p class="text-sm text-muted-foreground">Builds an Abstract Syntax Tree from tokens, validating syntax and structure.</p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold mb-2">3. Generator (SQL Output)</h3>
+                        <p class="text-sm text-muted-foreground">Traverses AST and generates database-specific DDL statements.</p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold mb-2">4. Ledger (State Management)</h3>
+                        <p class="text-sm text-muted-foreground">Tracks applied migrations with checksums for integrity verification.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="pt-8 border-t border-border text-center text-sm text-muted-foreground">
+                <p>Schemact Documentation - 304 tests passing - 100% success rate</p>
+                <p class="mt-2"><a href="https://github.com/ersinkoc/schemact" class="text-primary hover:underline">View on GitHub</a></p>
+            </footer>
+
+        </main>
+    </div>
+
+</body>
+</html>
