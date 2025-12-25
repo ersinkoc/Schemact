@@ -5,7 +5,7 @@
  * Handles user commands and orchestrates the migration workflow
  */
 
-import { writeFile, mkdir, access } from 'fs/promises';
+import { writeFile, mkdir, access, readFile } from 'fs/promises';
 import { join, resolve } from 'path';
 import { pathToFileURL } from 'url';
 import { SchemactConfig, SchemactError, SchemaIntrospector } from './ast/types.js';
@@ -24,6 +24,8 @@ import {
   pluralize,
 } from './utils/formatting.js';
 import { validateMigrationPath } from './utils/path-validator.js';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 class SchemactCLI {
   private command: string;
@@ -70,7 +72,7 @@ class SchemactCLI {
         case 'version':
         case '--version':
         case '-v':
-          this.showVersion();
+          await this.showVersion();
           break;
 
         default:
@@ -415,9 +417,25 @@ export default {
 
   /**
    * Show version information
+   * FIX BUG-047: Read version from package.json to prevent version mismatch
    */
-  private showVersion(): void {
-    console.log('Schemact v1.0.0');
+  private async showVersion(): Promise<void> {
+    try {
+      // Get the directory of the current module (dist/cli.js)
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = dirname(__filename);
+
+      // Go up one level to find package.json (from dist/ to root)
+      const packageJsonPath = resolve(__dirname, '..', 'package.json');
+      const packageJsonContent = await readFile(packageJsonPath, 'utf-8');
+      const packageJson = JSON.parse(packageJsonContent);
+
+      console.log(`Schemact v${packageJson.version}`);
+    } catch (error) {
+      // Fallback to a version if package.json cannot be read
+      console.log('Schemact (version unknown)');
+      console.error(`Warning: Could not read version from package.json: ${(error as Error).message}`);
+    }
   }
 
   /**
